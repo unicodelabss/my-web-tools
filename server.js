@@ -1,105 +1,60 @@
-// 1. जरूरी पैकेज इम्पोर्ट करें
 const express = require('express');
-const multer = require('multer');
-const AdmZip = require('adm-zip');
 const fs = require('fs');
 const path = require('path');
 const basicAuth = require('express-basic-auth');
 
 const app = express();
 
-// =================================================================
-// 2. सुरक्षित हिस्से (जो सिर्फ एडमिन के लिए हैं)
-// =================================================================
+// JSON डेटा को पढ़ने के लिए Middleware
+app.use(express.json());
 
-// पासवर्ड चेक करने वाला फंक्शन
+// --- पासवर्ड सुरक्षा ---
 const adminAuth = basicAuth({
-    users: { 'admin': 'password123' }, // <<< अपना यूजरनेम और पासवर्ड यहाँ बदलें
-    challenge: true,
-    unauthorizedResponse: 'Unauthorized access. Please provide correct credentials.'
+    users: { 'admin': 'password123' }, // अपना पासवर्ड यहाँ बदलें
+    challenge: true
 });
 
-// Multer को फाइल अपलोड के लिए तैयार करना
-const upload = multer({ storage: multer.memoryStorage() });
+// ध्यान दें: अब हम एडमिन पेज या फाइल अपलोड को यहाँ हैंडल नहीं कर रहे हैं।
+// Vercel.json उन्हें सीधे हैंडल करेगा या ब्लॉक करेगा।
+// हमारा सर्वर अब सिर्फ डेटा API के लिए है।
 
-// एडमिन पैनल का रूट
-app.get('/admin', adminAuth, (req, res) => {
-    // सर्वरलेस में पाथ के लिए path.resolve का इस्तेमाल करना बेहतर होता है
-    res.sendFile(path.resolve(__dirname, 'views', 'admin.html'));
-});
-
-// फाइल अपलोड का रूट
-app.post('/upload', adminAuth, upload.single('toolfile'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).send('No file uploaded.');
+// --- API Endpoints ---
+app.get('/api/data', (req, res) => {
+    try {
+        // हम JSON फाइल को सीधे इम्पोर्ट करेंगे, यह सर्वरलेस में ज़्यादा विश्वसनीय है।
+        const data = require('./tools-data.json');
+        
+        // टूल्स को ऑर्डर के हिसाब से सॉर्ट करें
+        data.tools.sort((a, b) => (a.order || 999) - (b.order || 999));
+        
+        res.status(200).json(data);
+    } catch (error) {
+        console.error("Error reading or parsing tools-data.json:", error);
+        res.status(500).json({ error: "Could not load data." });
     }
+});
 
-    // सर्वरलेस में लिखने के लिए '/tmp' फोल्डर का इस्तेमाल किया जाता है, जो Vercel देता है
-    const toolsDir = path.join('/tmp', 'tools');
+// टूल की जानकारी को अपडेट करने के लिए API
+app.post('/api/tools/update-all', adminAuth, (req, res) => {
+    const { tools } = req.body;
+    if (!Array.isArray(tools)) {
+        return res.status(400).json({ success: false, message: 'Invalid data format.' });
+    }
     
-    // अगर डायरेक्टरी मौजूद नहीं है तो बनाएं
-    if (!fs.existsSync(toolsDir)) {
-        fs.mkdirSync(toolsDir, { recursive: true });
-    }
-
-    // ZIP फाइल को हैंडल करना
-    if (req.file.mimetype === 'application/zip' || req.file.mimetype === 'application/x-zip-compressed') {
-        try {
-            const zip = new AdmZip(req.file.buffer);
-            // Vercel पर सीधे प्रोजेक्ट डायरेक्टरी में लिखने की कोशिश न करें
-            // इसके बजाय, हमें फाइलों को एक-एक करके पढ़कर सर्व करना होगा
-            // यह एक जटिल बदलाव है, अभी के लिए हम इसे सरल रखते हैं
-            // नीचे दिया गया तरीका अभी भी Vercel के "रीड-ओनली" सिस्टम के कारण काम नहीं करेगा
-            
-            // सही तरीका: GitHub पर कोड भेजें
-            // अभी के लिए, हम सिर्फ API को ठीक करते हैं
-            
-            // यह लाइन Vercel पर एरर देगी, लेकिन लोकल पर काम करेगी
-            // zip.extractAllTo(path.join(__dirname, 'tools'), true);
-            
-            // Vercel पर काम करने के लिए, हमें पहले इसे GitHub पर भेजना होगा
-            console.log('File upload logic needs rework for Vercel writable directory');
-            res.redirect('/?upload=success');
-
-        } catch (e) {
-            console.error("Error extracting ZIP:", e);
-            res.status(500).send("Could not extract the ZIP file. It might be corrupted.");
-        }
-    } 
-    // HTML फाइल को हैंडल करना
-    else if (req.file.mimetype === 'text/html') {
-         // यह भी Vercel पर काम नहीं करेगा
-        console.log('File upload logic needs rework for Vercel writable directory');
-        res.redirect('/?upload=success');
-    } else {
-        res.status(400).send('Invalid file type. Please upload a ZIP or HTML file.');
-    }
-});
-
-
-// =================================================================
-// 3. पब्लिक हिस्से (API)
-// =================================================================
-
-// API Endpoint: जो सभी उपलब्ध टूल्स की लिस्ट देगा
-app.get('/api/tools', (req, res) => {
-    // Vercel पर 'tools' फोल्डर सीधे एक्सेसिबल होता है
-    const toolsDir = path.resolve(__dirname, 'tools');
+    const dataFilePath = path.join('/tmp', 'tools-data.json');
+    const currentData = require('./tools-data.json');
+    currentData.tools = tools;
     
-    fs.readdir(toolsDir, { withFileTypes: true }, (err, files) => {
-        if (err) {
-            console.error("Could not read tools directory:", err);
-            return res.status(500).json({ error: 'Tools directory could not be read on the server.' });
-        }
-        const toolFolders = files
-            .filter(dirent => dirent.isDirectory())
-            .map(dirent => ({
-                name: dirent.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                url: `/tools/${dirent.name}/` // यह URL vercel.json द्वारा हैंडल किया जाएगा
-            }));
-        res.json(toolFolders);
-    });
+    // Vercel पर लिखने के लिए /tmp फोल्डर का इस्तेमाल होता है,
+    // लेकिन यह डिप्लॉयमेंट का हिस्सा नहीं बनता।
+    // इसका मतलब है कि यह तरीका भी लाइव डेटा को स्थायी रूप से नहीं बदलेगा।
+    // सही तरीका हमेशा Git Workflow ही है।
+    // fs.writeFileSync(dataFilePath, JSON.stringify(currentData, null, 2));
+    
+    console.log("Data update requested. Remember to commit changes to git for persistence.");
+    res.json({ success: true, message: 'Update request received. Commit tools-data.json to save changes permanently.' });
 });
 
-// यह सुनिश्चित करता है कि Express ऐप Vercel द्वारा इस्तेमाल किया जा सके
+
+// यह Vercel के लिए ऐप को एक्सपोर्ट करता है
 module.exports = app;

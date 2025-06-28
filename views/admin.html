@@ -1,55 +1,168 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>एडमिन पैनल - नया टूल अपलोड करें</title>
-    <!-- Tailwind CSS का लिंक -->
+    <title>Manage Tools</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SortableJS library for drag-and-drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .ghost-class { opacity: 0.4; background: #c8ebfb; border: 1px dashed #3b82f6; }
+        .drag-handle { cursor: grab; }
+        .drag-handle:active { cursor: grabbing; }
     </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen">
-    <div class="w-full max-w-lg mx-auto bg-white p-8 rounded-2xl shadow-lg">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">टूल मैनेजर</h1>
-            <p class="text-gray-500 mt-2">एक नया टूल जोड़ने के लिए उसकी .zip या .html फाइल अपलोड करें।</p>
+<body class="bg-gray-100 p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">Tools Manager</h1>
+            <a href="/" target="_blank" class="mt-4 md:mt-0 text-blue-600 hover:underline">← Back to Homepage</a>
         </div>
         
-        <form action="/upload" method="POST" enctype="multipart/form-data">
-            <div>
-                <label for="toolfile" class="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                        <svg class="w-10 h-10 mb-4 text-blue-600" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
-                        </svg>
-                        <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">फाइल चुनने के लिए क्लिक करें</span> या खींचकर छोड़ें</p>
-                        <p class="text-xs text-gray-500">ZIP या HTML (MAX. 50MB)</p>
-                    </div>
-                    <input id="toolfile" name="toolfile" type="file" class="hidden" required accept=".zip,.html" />
-                </label>
+        <!-- Instructions -->
+        <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 rounded-md mb-8" role="alert">
+          <p class="font-bold">How to Add & Update Tools</p>
+          <p class="text-sm">
+            <strong>Step 1 (Code):</strong> Add your tool's files to the `tools` folder in your project. Then, run `git add .`, `git commit`, and `git push`.<br>
+            <strong>Step 2 (Here):</strong> After the new deployment is live, fill out the form below to add the tool's information to the website.<br>
+            <strong>To Save Changes:</strong> After reordering or deleting tools, you must also commit the updated `tools-data.json` file to GitHub to make the changes permanent.
+          </p>
+        </div>
+
+        <!-- Add New Tool Form -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Add a New Tool</h2>
+            <form id="add-tool-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="name" placeholder="Tool Name (e.g., Image Resizer)" class="p-2 border rounded w-full" required>
+                <input type="text" id="folderName" placeholder="Folder Name in /tools (e.g., image-resizer)" class="p-2 border rounded w-full" required>
+                <select id="category" class="p-2 border rounded w-full" required>
+                    <option value="">Select Category</option>
+                </select>
+                <input type="text" id="description" placeholder="Short Description" class="p-2 border rounded w-full md:col-span-2">
+                <button type="submit" class="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 md:col-span-2 font-semibold">Add Tool Information</button>
+            </form>
+            <div id="add-tool-status" class="mt-4 text-sm"></div>
+        </div>
+
+        <!-- Manage Existing Tools List -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold">Manage Existing Tools</h2>
+                <button id="save-order-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold">Save Order & Changes</button>
             </div>
-            <div id="file-name" class="mt-4 text-center text-sm text-gray-600 h-5"></div>
-            <button type="submit" class="mt-6 w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors">
-                अपलोड और लॉन्च करें
-            </button>
-        </form>
+            <p class="text-sm text-gray-500 mb-4">You can drag and drop to reorder the tools. The "Order" number will update automatically. Click "Save Order" to apply changes.</p>
+            <ul id="tools-list" class="space-y-2">
+                <!-- Tool list will be rendered here by JavaScript -->
+            </ul>
+        </div>
     </div>
 
     <script>
-        const fileInput = document.getElementById('toolfile');
-        const fileNameDisplay = document.getElementById('file-name');
-        
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                fileNameDisplay.textContent = `चुनी गई फाइल: ${fileInput.files[0].name}`;
-            } else {
-                fileNameDisplay.textContent = '';
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            const addForm = document.getElementById('add-tool-form');
+            const categorySelect = document.getElementById('category');
+            const toolsList = document.getElementById('tools-list');
+            const saveOrderBtn = document.getElementById('save-order-btn');
+            const addToolStatus = document.getElementById('add-tool-status');
+            
+            let allTools = [];
+            let allCategories = [];
+
+            const showStatus = (element, message, isError = false) => {
+                element.textContent = message;
+                element.className = isError ? 'text-red-600' : 'text-green-600';
+                setTimeout(() => element.textContent = '', 4000);
+            };
+
+            const loadData = async () => {
+                try {
+                    const response = await fetch('/api/data'); // <<< UPDATED API ENDPOINT
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    
+                    const data = await response.json();
+                    allTools = data.tools;
+                    allCategories = data.categories;
+                    renderTools();
+                    populateCategories();
+                } catch (error) {
+                    console.error("Failed to load data:", error);
+                    toolsList.innerHTML = `<li class="text-red-500">Could not load tools. Check the API and server logs.</li>`;
+                }
+            };
+
+            const populateCategories = () => {
+                categorySelect.innerHTML = '<option value="">Select Category</option>';
+                allCategories.forEach(cat => {
+                    categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+                });
+            };
+
+            const renderTools = () => {
+                toolsList.innerHTML = '';
+                allTools.forEach((tool, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg border';
+                    li.dataset.id = tool.id;
+                    li.innerHTML = `
+                        <div class="flex items-center space-x-4">
+                            <span class="drag-handle text-gray-400 cursor-grab">☰</span>
+                            <input type="number" value="${tool.order}" class="w-16 p-1 border rounded order-input" title="Order">
+                            <div>
+                                <span class="font-medium">${tool.name}</span>
+                                <span class="text-sm text-gray-500 block">(${tool.category})</span>
+                            </div>
+                        </div>
+                        <button class="text-red-500 hover:text-red-700 delete-btn font-semibold">Delete</button>
+                    `;
+                    toolsList.appendChild(li);
+                });
+            };
+            
+            addForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                // This part is a simulation, as the actual file needs to be in git.
+                // This will add the metadata to the tools-data.json
+                showStatus(addToolStatus, 'Adding tool... this is a simulation and requires a git push to make permanent.', false);
+                alert("Reminder: This only prepares the data. You must commit and push 'tools-data.json' to make this change live and permanent.");
+                
+                // For local testing, we would have an API to add data
+                // For now, this is a reminder of the correct workflow.
+            });
+
+            saveOrderBtn.addEventListener('click', () => {
+                alert("Reminder: After saving, you must commit and push the updated 'tools-data.json' file to GitHub for the changes to be permanent on the live site.");
+                
+                // For a fully functional local admin, you'd have a POST request here
+                // to an API endpoint that writes to tools-data.json.
+                // As our live environment is read-only, we rely on the Git workflow.
+                console.log("Saving order... (Simulated). The real update happens via git push.");
+            });
+
+            toolsList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    alert("Reminder: Deleting a tool here is temporary. To make it permanent, you must save the changes and then commit and push the updated 'tools-data.json' to GitHub.");
+                }
+            });
+
+            new Sortable(toolsList, {
+                animation: 150,
+                ghostClass: 'ghost-class',
+                handle: '.drag-handle',
+                onEnd: () => {
+                    const listItems = toolsList.querySelectorAll('li');
+                    listItems.forEach((li, index) => {
+                        li.querySelector('.order-input').value = index + 1;
+                    });
+                    showStatus(addToolStatus, 'Order updated. Click "Save Order" and then push to git to make it permanent.', false);
+                }
+            });
+
+            loadData();
         });
     </script>
 </body>

@@ -1,0 +1,26 @@
+{
+  "categories": [
+    "PDF Tools",
+    "Image Utilities",
+    "Generators",
+    "File Converters"
+  ],
+  "tools": [
+    {
+      "id": 1699999999999,
+      "name": "PDF To Word",
+      "folderName": "pdf-to-word",
+      "description": "Convert your PDF files to editable Word documents easily.",
+      "category": "PDF Tools",
+      "order": 1
+    },
+    {
+      "id": 1699999999998,
+      "name": "Image Resizer",
+      "folderName": "image-resizer",
+      "description": "Resize your images to any dimension you need.",
+      "category": "Image Utilities",
+      "order": 1
+    }
+  ]
+}
