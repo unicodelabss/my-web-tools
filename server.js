@@ -4,57 +4,54 @@ const path = require('path');
 const basicAuth = require('express-basic-auth');
 
 const app = express();
+const port = 3000;
 
-// JSON डेटा को पढ़ने के लिए Middleware
+// --- Static Files ---
+// यह Vercel और लोकल दोनों पर काम करेगा
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/tools', express.static(path.join(__dirname, 'tools')));
+
+// --- Middlewares ---
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// --- पासवर्ड सुरक्षा ---
+// --- Password Protection ---
 const adminAuth = basicAuth({
     users: { 'admin': 'password123' }, // अपना पासवर्ड यहाँ बदलें
     challenge: true
 });
 
-// ध्यान दें: अब हम एडमिन पेज या फाइल अपलोड को यहाँ हैंडल नहीं कर रहे हैं।
-// Vercel.json उन्हें सीधे हैंडल करेगा या ब्लॉक करेगा।
-// हमारा सर्वर अब सिर्फ डेटा API के लिए है।
+// --- Routes ---
 
-// --- API Endpoints ---
+// Admin Panel Route (Protected)
+app.get('/admin', adminAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+});
+
+// API Route to get data (Public)
 app.get('/api/data', (req, res) => {
     try {
-        // हम JSON फाइल को सीधे इम्पोर्ट करेंगे, यह सर्वरलेस में ज़्यादा विश्वसनीय है।
         const data = require('./tools-data.json');
-        
-        // टूल्स को ऑर्डर के हिसाब से सॉर्ट करें
         data.tools.sort((a, b) => (a.order || 999) - (b.order || 999));
-        
         res.status(200).json(data);
     } catch (error) {
-        console.error("Error reading or parsing tools-data.json:", error);
+        console.error("Error loading data.json:", error);
         res.status(500).json({ error: "Could not load data." });
     }
 });
 
-// टूल की जानकारी को अपडेट करने के लिए API
-app.post('/api/tools/update-all', adminAuth, (req, res) => {
-    const { tools } = req.body;
-    if (!Array.isArray(tools)) {
-        return res.status(400).json({ success: false, message: 'Invalid data format.' });
-    }
-    
-    const dataFilePath = path.join('/tmp', 'tools-data.json');
-    const currentData = require('./tools-data.json');
-    currentData.tools = tools;
-    
-    // Vercel पर लिखने के लिए /tmp फोल्डर का इस्तेमाल होता है,
-    // लेकिन यह डिप्लॉयमेंट का हिस्सा नहीं बनता।
-    // इसका मतलब है कि यह तरीका भी लाइव डेटा को स्थायी रूप से नहीं बदलेगा।
-    // सही तरीका हमेशा Git Workflow ही है।
-    // fs.writeFileSync(dataFilePath, JSON.stringify(currentData, null, 2));
-    
-    console.log("Data update requested. Remember to commit changes to git for persistence.");
-    res.json({ success: true, message: 'Update request received. Commit tools-data.json to save changes permanently.' });
-});
+// Note: The /upload and other POST/DELETE routes are part of a local workflow
+// and are not required for the Vercel deployment to serve the site.
+// They can be added back inside an "if (process.env.NODE_ENV !== 'production')" block
+// if you want to use the local admin panel to modify files.
 
+// --- Start server for local development ---
+// This part will be ignored by Vercel
+if (!process.env.VERCEL) {
+    app.listen(port, () => {
+        console.log(`✅ Local server running at http://localhost:${port}`);
+    });
+}
 
-// यह Vercel के लिए ऐप को एक्सपोर्ट करता है
+// Export the app for Vercel
 module.exports = app;
