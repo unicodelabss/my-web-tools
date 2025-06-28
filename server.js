@@ -7,17 +7,15 @@ const app = express();
 const port = 3000;
 
 // --- Static Files ---
-// यह Vercel और लोकल दोनों पर काम करेगा
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/tools', express.static(path.join(__dirname, 'tools')));
 
 // --- Middlewares ---
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // --- Password Protection ---
 const adminAuth = basicAuth({
-    users: { 'admin': 'password123' }, // अपना पासवर्ड यहाँ बदलें
+    users: { 'admin': 'password122' }, // अपना पासवर्ड यहाँ बदलें
     challenge: true
 });
 
@@ -28,25 +26,29 @@ app.get('/admin', adminAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'admin.html'));
 });
 
-// API Route to get data (Public)
+// API Route to get data (Public) - WITH DEBUGGING
 app.get('/api/data', (req, res) => {
     try {
-        const data = require('./tools-data.json');
+        // हम fs.readFileSync का इस्तेमाल करेंगे, यह ज़्यादा स्पष्ट है
+        const dataPath = path.join(__dirname, 'tools-data.json');
+        const rawData = fs.readFileSync(dataPath, 'utf8');
+        const data = JSON.parse(rawData); // अगर JSON में गलती है, तो एरर यहीं आएगा
+
         data.tools.sort((a, b) => (a.order || 999) - (b.order || 999));
         res.status(200).json(data);
     } catch (error) {
-        console.error("Error loading data.json:", error);
-        res.status(500).json({ error: "Could not load data." });
+        // ▼▼▼ यह सबसे ज़रूरी बदलाव है ▼▼▼
+        // हम असली एरर को कंसोल में भी दिखाएंगे और फ्रंटएंड को भी भेजेंगे
+        console.error("SERVER-SIDE ERROR in /api/data:", error);
+        res.status(500).json({ 
+            error: "Could not load data from server.",
+            // हम एरर का मैसेज भी भेज रहे हैं
+            details: error.message 
+        });
     }
 });
 
-// Note: The /upload and other POST/DELETE routes are part of a local workflow
-// and are not required for the Vercel deployment to serve the site.
-// They can be added back inside an "if (process.env.NODE_ENV !== 'production')" block
-// if you want to use the local admin panel to modify files.
-
 // --- Start server for local development ---
-// This part will be ignored by Vercel
 if (!process.env.VERCEL) {
     app.listen(port, () => {
         console.log(`✅ Local server running at http://localhost:${port}`);

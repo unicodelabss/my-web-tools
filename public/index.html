@@ -67,62 +67,80 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Mouse gradient effect
-            const body = document.body;
-            body.addEventListener('mousemove', (e) => { body.style.setProperty('--x', e.clientX + 'px'); body.style.setProperty('--y', e.clientY + 'px'); });
-            
-            // Typing animation
-            const headingEl = document.getElementById('typing-heading');
-            const subheadingEl = document.getElementById('typing-subheading');
-            const headingText = "All the essential tools, in one place.";
-            const subheadingText = "Effortlessly convert, edit, and manage your documents, all completely free.";
-            function typeWriter(element, text, speed, callback) { let i = 0; element.innerHTML = ""; element.classList.add('typing-cursor'); function type() { if (i < text.length) { element.innerHTML += text.charAt(i); i++; setTimeout(type, speed); } else { element.classList.remove('typing-cursor'); if (callback) callback(); } } type(); }
-            function startTyping() { typeWriter(headingEl, headingText, 75, () => { typeWriter(subheadingEl, subheadingText, 40); }); }
-            setTimeout(startTyping, 500);
+<!-- Scripts -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // ... (आपका माउस और टाइपिंग एनीमेशन वाला कोड वैसा ही रहेगा) ...
+        
+        const categoriesContainer = document.getElementById('categories-container');
 
-            // Backend logic (unchanged)
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('upload') === 'success') {
-                const messageDiv = document.getElementById('success-message');
-                messageDiv.innerHTML = `<div class="p-4 text-sm text-green-800 rounded-lg bg-green-50" role="alert"><span class="font-medium">Success!</span> Your new tool has been added successfully.</div>`;
-                messageDiv.style.display = 'block';
-                setTimeout(() => { messageDiv.style.display = 'none'; }, 4000);
-                window.history.replaceState(null, '', window.location.pathname);
-            }
+        // ▼▼▼ यह fetch वाला हिस्सा पूरी तरह से नया और बेहतर है ▼▼▼
+        fetch('/api/data')
+            .then(async response => {
+                // अगर सर्वर से जवाब OK नहीं है (जैसे 404 या 500 एरर)
+                if (!response.ok) {
+                    // सर्वर से मिले एरर मैसेज को पढ़ने की कोशिश करो
+                    const errorData = await response.json().catch(() => null);
+                    // एक नया एरर बनाओ जिसमें सर्वर का असली मैसेज हो
+                    const err = new Error(errorData?.details || `HTTP error! Status: ${response.status}`);
+                    throw err; // इस एरर को catch ब्लॉक में भेजो
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tools = data.tools;
+                categoriesContainer.innerHTML = ''; 
 
-            fetch('/api/tools')
-                .then(response => response.ok ? response.json() : Promise.reject('Failed to load'))
-                .then(tools => {
-                    const container = document.getElementById('tools-container');
-                    container.innerHTML = ''; 
-                    if (tools.length === 0) {
-                        container.innerHTML = '<p class="col-span-full text-center text-gray-500">No tools available yet. Please upload a new tool from the admin panel.</p>';
-                        return;
-                    }
-                    tools.forEach((tool, index) => {
-                        const toolCardHTML = `
-                            <a href="${tool.url}" class="tool-card animate-in" style="animation-delay: ${index * 100}ms;">
-                                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3m6-6h3m-3 6h3M9 6h6M9 18h6" />
-                                    </svg>
-                                </div>
-                                <h3 class="text-lg font-bold font-montserrat text-gray-900 mb-2">${tool.name}</h3>
-                                <p class="text-sm text-gray-500 flex-grow">Use this tool to simplify your workflow.</p>
-                            </a>
+                if (tools.length === 0) {
+                    categoriesContainer.innerHTML = '<p class="text-center text-gray-500">No tools available yet.</p>';
+                    return;
+                }
+                
+                const groupedTools = tools.reduce((acc, tool) => {
+                    (acc[tool.category] = acc[tool.category] || []).push(tool);
+                    return acc;
+                }, {});
+
+                for (const category in groupedTools) {
+                    const section = document.createElement('div');
+                    section.className = 'category-section';
+
+                    const title = document.createElement('h3');
+                    title.className = 'category-title';
+                    title.textContent = category;
+                    section.appendChild(title);
+
+                    const grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8';
+
+                    groupedTools[category].forEach((tool, index) => {
+                        const toolLink = document.createElement('a');
+                        toolLink.href = `/tools/${tool.folderName}/`;
+                        toolLink.className = 'tool-card animate-in';
+                        toolLink.style.animationDelay = `${index * 100}ms`;
+                        toolLink.innerHTML = `
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M12 6V3m0 18v-3m6-6h3m-3 6h3M9 6h6M9 18h6" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-bold font-montserrat text-gray-900 mb-2">${tool.name}</h3>
+                            <p class="text-sm text-gray-500 flex-grow">${tool.description}</p>
                         `;
-                        container.innerHTML += toolCardHTML;
+                        grid.appendChild(toolLink);
                     });
-                })
-                .catch(error => {
-                    console.error('Error fetching tools:', error);
-                    const container = document.getElementById('tools-container');
-                    container.innerHTML = '<p class="col-span-full text-center text-red-500">Sorry, could not load the tools.</p>';
-                });
-        });
-    </script>
+                    
+                    section.appendChild(grid);
+                    categoriesContainer.appendChild(section);
+                }
+            })
+            .catch(error => {
+                // अब यह विस्तृत एरर मैसेज दिखाएगा
+                console.error('DETAILED ERROR:', error);
+                const container = document.getElementById('categories-container');
+                container.innerHTML = `<p class="text-center text-red-500 font-semibold">Sorry, could not load the tools.<br><small class="font-normal"><strong>Reason:</strong> ${error.message}</small></p>`;
+            });
+    });
+</script>
 </body>
 </html>
