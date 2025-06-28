@@ -101,3 +101,4 @@ app.listen(port, () => {
     console.log(`Homepage is at: http://localhost:${port}`);
     console.log(`Admin Panel is at: http://localhost:${port}/admin`);
 });
+module.exports = app;
