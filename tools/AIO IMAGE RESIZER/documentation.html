@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - All-in-One Image Resizer</title>
+    <style>
+        /* 1. FONT & ROOT VARIABLES (LIGHT/DARK MODE) */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #f8f9fa;
+            --content-bg: #ffffff;
+            --content-bg-rgb: 255, 255, 255; /* For RGBA transparency */
+            --text-color: #212529;
+            --text-muted: #6c757d;
+            --heading-color: #1a1a2e;
+            --primary-color: #6a5af9;
+            --primary-light: #8c82ff;
+            --border-color: #dee2e6;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+            --code-bg: #e9ecef;
+            --code-text: #333;
+            --note-bg: #fff3cd;
+            --note-border: #ffe69c;
+            --note-text: #664d03;
+            --transition-speed: 0.3s;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --content-bg: #1e1e1e;
+            --content-bg-rgb: 30, 30, 30; /* For RGBA transparency */
+            --text-color: #e0e0e0;
+            --text-muted: #8a8a9e;
+            --heading-color: #ffffff;
+            --primary-color: #8c82ff;
+            --primary-light: #6a5af9;
+            --border-color: rgba(255, 255, 255, 0.15);
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --code-bg: #2d2d2d;
+            --code-text: #f1f1f1;
+            --note-bg: rgba(255, 229, 100, 0.1);
+            --note-border: #ffe69c;
+            --note-text: #fff3cd;
+        }
+
+        /* 2. GLOBAL STYLES */
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding-top: 80px; /* Space for sticky header */
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 40px auto;
+            padding: 40px;
+            background-color: var(--content-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px var(--shadow-color);
+            transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+        }
+
+        /* 3. HEADER & THEME SWITCHER */
+        .sticky-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 20px;
+            height: 70px;
+            background-color: rgba(var(--content-bg-rgb), 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            transition: all var(--transition-speed) ease;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 850px;
+        }
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--heading-color);
+            margin: 0;
+        }
+        .theme-switcher {
+            display: flex;
+            align-items: center;
+            background-color: var(--code-bg);
+            border-radius: 20px;
+            padding: 4px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+        .theme-switcher:hover {
+            background-color: var(--bg-color);
+        }
+        .theme-switcher-icon {
+            width: 24px;
+            height: 24px;
+            padding: 3px;
+            color: var(--text-muted);
+        }
+        #theme-toggle { display: none; }
+        #theme-toggle:checked + .theme-switcher .icon-moon { display: none; }
+        #theme-toggle:not(:checked) + .theme-switcher .icon-sun { display: none; }
+
+        /* 4. TYPOGRAPHY & ELEMENTS */
+        h1, h2, h3 {
+            color: var(--heading-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+        h1 { font-size: 2.4em; }
+        h2 { font-size: 1.8em; }
+        h3 { font-size: 1.4em; border-bottom: none; }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color var(--transition-speed) ease;
+        }
+        a:hover { color: var(--primary-light); }
+        
+        code {
+            background-color: var(--code-bg);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+            color: var(--primary-color);
+            font-size: 0.9em;
+            transition: background-color var(--transition-speed) ease;
+        }
+        pre {
+            background-color: var(--code-bg);
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            transition: background-color var(--transition-speed) ease;
+        }
+        pre code { background: none; padding: 0; font-size: 0.95em; color: var(--text-color); }
+        
+        ul, ol { padding-left: 25px; }
+        li { margin-bottom: 12px; }
+
+        /* 5. CUSTOM BLOCKS & INTERACTIVITY */
+        .thank-you, .note, .toc {
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 12px;
+            border-left: 5px solid;
+            transition: box-shadow var(--transition-speed) ease, transform var(--transition-speed) ease;
+        }
+        .thank-you:hover, .note:hover, .toc:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow-color);
+        }
+
+        .thank-you {
+            background-color: rgba(106, 90, 249, 0.1);
+            border-color: var(--primary-color);
+        }
+        .thank-you p { margin: 0; font-weight: 500; }
+
+        .note {
+            background-color: var(--note-bg);
+            border-color: var(--note-border);
+            color: var(--note-text);
+        }
+        .note strong { color: inherit; }
+
+        .toc {
+            background-color: var(--content-bg);
+            border: 1px solid var(--border-color);
+            border-left: 5px solid var(--primary-light);
+        }
+        .toc h3 { margin-top: 0; }
+        .toc ul { list-style-type: none; padding-left: 0; }
+        .toc li { margin-bottom: 8px; }
+        .toc a { font-weight: 600; }
+
+        /* 6. FOOTER */
+        footer {
+            text-align: center;
+            padding: 40px 20px 20px;
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <header class="sticky-header">
+        <div class="header-content">
+            <h2 class="header-title">All-in-One Image Resizer | Documentation</h2>
+            <label for="theme-toggle" class="theme-switcher-label">
+                <input type="checkbox" id="theme-toggle">
+                <div class="theme-switcher">
+                    <!-- Sun Icon -->
+                    <svg class="theme-switcher-icon icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
+                    <!-- Moon Icon -->
+                    <svg class="theme-switcher-icon icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>
+                </div>
+            </label>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="thank-you">
+            <p><strong>Thank you for purchasing the "All-in-One Image Resizer"!</strong></p>
+        </div>
+
+        <nav class="toc" id="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#introduction">1. Introduction</a></li>
+                <li><a href="#features">2. Key Features</a></li>
+                <li><a href="#implementation">3. Implementation</a></li>
+                <li><a href="#customization">4. Customization</a></li>
+                <li><a href="#changelog">5. Changelog</a></li>
+                <li><a href="#support">6. Support & FAQ</a></li>
+            </ul>
+        </nav>
+
+        <section id="introduction">
+            <h2>1. Introduction</h2>
+            <p>This is a standalone, client-side image resizing tool. This means it functions entirely within the user's browser, requiring no server-side languages (like PHP, Node.js) or databases. This makes it incredibly fast, private, and easy to deploy on any web hosting environment.</p>
+        </section>
+
+        <section id="features">
+            <h2>2. Key Features</h2>
+            <ul>
+                <li><strong>100% Client-Side:</strong> No server dependencies, zero load on your hosting.</li>
+                <li><strong>Dual Resizing Modes:</strong> Resize by dimensions or by target file size (KB).</li>
+                <li><strong>Format Conversion:</strong> Output to JPG, PNG, and the modern WEBP format.</li>
+                <li><strong>Quality Control:</strong> Adjust the quality for JPEG/WEBP formats.</li>
+                <li><strong>Modern UI/UX:</strong> Premium glassmorphism design and an intuitive user experience.</li>
+                <li><strong>Fully Responsive:</strong> Looks and works great on desktops, tablets, and mobile phones.</li>
+                <li><strong>Drag & Drop:</strong> For easy and quick file uploads.</li>
+                <li><strong>Single File Deployment:</strong> Extremely simple setup, just upload one file.</li>
+            </ul>
+        </section>
+
+        <section id="implementation">
+            <h2>3. Implementation</h2>
+            <p>Deploying this script is incredibly simple as it requires no server-side setup.</p>
+
+            <div class="note">
+                <p><strong>Important Note:</strong> All you need is a web server (like Apache, Nginx) or any standard web hosting that can serve HTML files. You do <strong>not</strong> need PHP, Node.js, Python, or a database.</p>
+            </div>
+
+            <h3>Step-by-Step Guide:</h3>
+            <ol>
+                <li>
+                    <strong>Upload the File:</strong>
+                    <p>Using your web hosting's cPanel, an FTP client (like FileZilla), or any other file manager, upload the <code>index.html</code> file to your server.</p>
+                    <p>You can place it in your website's root directory (e.g., <code>public_html</code>) or create a dedicated folder. For example:</p>
+                    <pre><code>/public_html/tools/image-resizer/index.html</code></pre>
+                </li>
+                <li>
+                    <strong>Access in Browser:</strong>
+                    <p>Once the file is uploaded, simply navigate to its location in your web browser:</p>
+                    <pre><code>https://www.yourwebsite.com/tools/image-resizer/</code></pre>
+                </li>
+            </ol>
+            <p><strong>That's it!</strong> Your image resizer is now live and ready to use.</p>
+        </section>
+
+        <section id="customization">
+            <h2>4. Customization</h2>
+            <p>It's easy to customize the script to match your branding. Open the <code>index.html</code> file and locate the <code>:root</code> CSS selector inside the <code>&lt;style&gt;</code> tag.</p>
+            <h3>Changing Colors:</h3>
+            <pre><code>:root {
+    --im-primary-color: #6a5af9;
+    --im-primary-light: #8c82ff;
+    --im-bg-color: #1a1a2e;
+    /* ... you can change other colors from here ... */
+}</code></pre>
+            <p>Simply replace these hex codes with your preferred colors.</p>
+        </section>
+
+        <section id="changelog">
+            <h2>5. Changelog</h2>
+            <p>Keeping your product updated builds trust with customers.</p>
+            <ul>
+                <li><strong>v1.0 (Initial Release)</strong> - 2024-05-21
+                    <ul>
+                        <li>Initial release of the project.</li>
+                        <li>Features resizing by dimension, file size, and format conversion.</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <section id="support">
+            <h2>6. Support & FAQ</h2>
+            <h3>Support</h3>
+            <p>If you encounter any issues or have any questions, please do not hesitate to contact us through the comment section or direct message on the marketplace (e.g., Codester) where you purchased this script. We will be happy to assist you!</p>
+
+            <h3>Frequently Asked Questions</h3>
+            <p><strong>Q: Do I need a database to make this work?</strong><br>
+            A: No. This script is 100% client-side and does not require a database or any server-side programming.</p>
+            
+            <p><strong>Q: Can I change the colors and fonts?</strong><br>
+            A: Yes, absolutely. You can easily modify the CSS variables inside the <code>index.html</code> file as shown in the <a href="#customization">Customization</a> section.</p>
+            
+            <p><strong>Q: Can this script handle large images?</strong><br>
+            A: Yes, but performance will depend on the power of the user's computer, as all processing happens in the browser. For very large images (e.g., 20MB+), the process might take a few seconds.</p>
+        </section>
+
+        <footer>
+            <p>&copy; 2025 All-in-One Image Resizer | UnicodeLabs. All Rights Reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- THEME SWITCHER LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggle = document.getElementById('theme-toggle');
+            
+            // Function to apply the theme
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.body.classList.add('dark-mode');
+                    themeToggle.checked = true;
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    themeToggle.checked = false;
+                }
+            };
+
+            // Get the saved theme from localStorage
+            const savedTheme = localStorage.getItem('theme');
+
+            // Apply the saved theme or the user's OS preference
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                applyTheme('dark');
+            } else {
+                applyTheme('light');
+            }
+
+            // Listen for toggle changes
+            themeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

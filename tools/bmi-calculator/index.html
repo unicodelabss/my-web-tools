@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>BMI Calculator</title>
+    <style>
+        body { font-family: sans-serif; max-width: 400px; margin: 50px auto; }
+        input { width: 100%; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>BMI कैलकुलेटर</h2>
+    <input type="number" id="weight" placeholder="वजन (kg में)">
+    <input type="number" id="height" placeholder="ऊंचाई (cm में)">
+    <button onclick="calculateBmi()">BMI कैलकुलेट करें</button>
+    <h3 id="result"></h3>
+    <script>
+        function calculateBmi() {
+            const weight = document.getElementById('weight').value;
+            const height = document.getElementById('height').value / 100;
+            if(weight > 0 && height > 0) {
+                const bmi = (weight / (height * height)).toFixed(2);
+                document.getElementById('result').innerText = 'आपका BMI है: ' + bmi;
+            } else {
+                document.getElementById('result').innerText = 'कृपया सही वजन और ऊंचाई डालें।';
+            }
+        }
+    </script>
+</body>
+</html>

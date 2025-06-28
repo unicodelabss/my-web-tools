@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankFinder Pro - Interactive Customer Care Finder</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Existing Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- NEW FONT FOR FOOTER -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-gradient"></div>
+
+    <header class="sticky-header">
+        <nav class="container">
+            <a href="#" class="logo-container">
+                <i class="fas fa-university logo-icon"></i>
+                <span class="logo-text"></span>
+            </a>
+            <div class="theme-switcher">
+                <i class="fas fa-sun"></i>
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle-checkbox">
+                    <span class="slider round"></span>
+                </label>
+                <i class="fas fa-moon"></i>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero-section">
+            <h1 id="typing-title"></h1>
+        </section>
+
+        <div class="interactive-card search-box reveal">
+            <div class="card-content">
+                <h2><i class="fas fa-search-location"></i> Find Your Bank</h2>
+                <div class="input-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="e.g., HDFC Bank, SBI...">
+                </div>
+                <select id="bankSelect">
+                    <option value="">-- Or select from the list --</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="detailsContainer" class="interactive-card details-card reveal">
+            <div class="card-content">
+                <p class="placeholder">Select a bank to see its details here.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div class="footer-about">
+                <h3>Bank Customer Care Details Finder</h3>
+                <p>The most intuitive way to find bank customer care information. Fast, reliable, and always up-to-date.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h4>Connect With Us</h4>
+                <div class="social-icons">
+                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© Bank Customer Care Details Finder/UNICODELABS. ALL RIGHTS RESERVED..</p>
+        </div>
+    </footer>
+
+    <a href="#" id="back-to-top" class="back-to-top" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+
+    <script src="script.js"></script>
+</body>
+</html>
